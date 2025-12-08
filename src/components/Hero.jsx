@@ -3,7 +3,8 @@ import { useRef, useState, useEffect } from "react";
 import { TiLocationArrow } from "react-icons/ti";
 import Button from "./Button";
 import { useGSAP } from "@gsap/react";
-
+import Lottie from "lottie-react";
+import customLoader from "./animation/loading circle.json";
 import { ScrollTrigger } from "gsap/all";
 gsap.registerPlugin(ScrollTrigger);
 
@@ -13,10 +14,12 @@ const Hero = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadedVideos, setLoadedVideos] = useState(0);
 
-  const totalVideos = 4;
+  const totalVideos = 3; 
+  const currentVideoRef = useRef(null);
   const nextVideoRef = useRef(null);
+  const upcomingVideoRef = useRef(null);
 
-  const handleVideoLaod = () => {
+  const handleVideoLoad = () => {
     setLoadedVideos((prev) => prev + 1);
   };
 
@@ -28,8 +31,8 @@ const Hero = () => {
   };
 
   useEffect(() => {
-    if (loadedVideos === totalVideos - 1) {
-      setTimeout(() => setIsLoading(false), 0);
+    if (loadedVideos >= totalVideos) {
+      setIsLoading(false);
     }
   }, [loadedVideos]);
 
@@ -82,39 +85,37 @@ const Hero = () => {
 
   return (
     <div className="relative h-dvh w-screen overflow-x-hidden">
+      {/* Loader */}
       {isLoading && (
-        <div className="flex-center absolute z-100 h-dvh overflow-hidden bg-violet-50">
-          <div className="three-body">
-            <div className="three-body_dot"></div>
-            <div className="three-body_dot"></div>
-            <div className="three-body_dot"></div>
-          </div>
+        <div className="flex-center absolute z-100 h-dvh w-full overflow-hidden bg-violet-50">
+          <Lottie
+            animationData={customLoader}
+            loop={true}
+            style={{ width: 200, height: 200 }}
+          />
         </div>
       )}
+
       <div
         id="video-frame"
-        className="relative z-10 h-dvh w-screen overflow-hidden 
-        rounded-lg bg-blue-75"
+        className="relative z-10 h-dvh w-screen overflow-hidden rounded-lg bg-blue-75"
       >
         <div>
           <div
-            className="mask-clip-path absolute-center absolute z-50 
-        size-64 cursor-pointer overflow-hidden rounded-lg"
+            className="mask-clip-path absolute-center absolute z-50 size-64 cursor-pointer overflow-hidden rounded-lg"
           >
             <div
               onClick={handleMiniVdClick}
-              className="origin-center scale-50 opacity-0 transition-all 
-            duration-500 ease-in hover:scale-100 hover:opacity-100"
+              className="origin-center scale-50 opacity-0 transition-all duration-500 ease-in hover:scale-100 hover:opacity-100"
             >
               <video
-                ref={nextVideoRef}
+                ref={upcomingVideoRef}
                 src={getVideoSrc(upcomingVideo)}
                 loop
                 muted
                 id="current-video"
-                className="size-64 origin-center scale-150 
-              object-cover object-center"
-                onLoadedData={handleVideoLaod}
+                className="size-64 origin-center scale-150 object-cover object-center"
+                onLoadedData={handleVideoLoad}
               />
             </div>
           </div>
@@ -125,20 +126,20 @@ const Hero = () => {
             loop
             muted
             id="next-video"
-            className="absolute-center invisible absolute z-20 
-          size-64 object-cover object-center"
+            className="absolute-center invisible absolute z-20 size-64 object-cover object-center"
+            onLoadedData={handleVideoLoad}
           />
 
           <video
+            ref={currentVideoRef}
             src={getVideoSrc(
               currentIndex === totalVideos - 1 ? 1 : currentIndex
             )}
             autoPlay
             loop
             muted
-            className="absolute left-0 top-0 size-full object-cover
-            object-center"
-            onLoadedData={handleVideoLaod}
+            className="absolute left-0 top-0 size-full object-cover object-center"
+            onLoadedData={handleVideoLoad}
           />
         </div>
 

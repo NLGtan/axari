@@ -48,7 +48,7 @@ const Contact = () => {
 
           <p className="special-font mt-10 w-full font-zentry text-5xl leading-[0.9] md:text-[6rem]">
             Let's b<b>u</b>ild the <br />
-            new <b>e</b>ra of <br />g<b></b>ming together
+            new <b>e</b>ra of <br />g<b>a</b>ming together
           </p>
 
           <Button href="https://ng-portfolio-topaz.vercel.app/" title="contact me" containerClass="mt-10 cursor-pointer" />
