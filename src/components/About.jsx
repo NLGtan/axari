@@ -41,7 +41,7 @@ const About = () => {
         <div className="absolute bottom-[-80dvh] left-1/2 w-full max-w-96 -translate-x-1/2 text-center font-circular-web text-lg md:max-w-136">
           <p>The Game of Games begins—your life, now an epic MMORPG</p>
           <p className="text-gray-500">
-            Zentry unites every player from countless games and platforms, both
+            Axari unites every player from countless games and platforms, both
             digital and physical, into a unified Play Economy
           </p>
         </div>
