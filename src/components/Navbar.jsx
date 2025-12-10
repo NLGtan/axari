@@ -99,7 +99,7 @@ const NavBar = () => {
               <audio
                 ref={audioElementRef}
                 className="hidden"
-                src="/audio/loop.mp3"
+                src="/audio/loop2.MP3"
                 loop
               />
               {[1, 2, 3, 4].map((bar) => (
