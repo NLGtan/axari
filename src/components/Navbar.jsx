@@ -1,36 +1,46 @@
 import React, { useEffect, useRef, useState } from "react";
 import Button from "./Button";
 import { TiLocationArrow } from "react-icons/ti";
-import { useWindowScroll } from "react-use";
 import gsap from "gsap";
 
 const navItems = ["Nexus", "Vault", "Prologue", "About", "Contact"];
 
 const NavBar = () => {
-  const [isAudioPlaying, setAudioPlaying] = useState(false);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [isIndicatorActive, setIsIndicatorActive] = useState(false);
-  const [lastScrollY, setLastScrollY] = useState(0);
   const [isNavVisible, setIsNavVisible] = useState(true);
 
   const navContainerRef = useRef(null);
   const audioElementRef = useRef(null);
+  const lastScrollYRef = useRef(0); // track scroll without causing re-renders
 
-  const { y: currentScrollY } = useWindowScroll();
-
+  // NAVBAR SHOW/HIDE ON SCROLL
   useEffect(() => {
-    if (currentScrollY === 0) {
-      setIsNavVisible(true);
-      navContainerRef.current.classList.remove("floating-nav");
-    } else if (currentScrollY > lastScrollY) {
-      setIsNavVisible(false);
-      navContainerRef.current.classList.add("floating-nav");
-    } else if (currentScrollY < lastScrollY) {
-      setIsNavVisible(true);
-      navContainerRef.current.classList.add("floating-nav");
-    }
-    setLastScrollY(currentScrollY);
-  }, [currentScrollY, lastScrollY]);
+    const handleScroll = () => {
+      const currentY = window.scrollY;
 
+      if (currentY === 0) {
+        setIsNavVisible(true);
+        navContainerRef.current.classList.remove("floating-nav");
+      } else if (currentY > lastScrollYRef.current) {
+        setIsNavVisible(false);
+        navContainerRef.current.classList.add("floating-nav");
+      } else if (currentY < lastScrollYRef.current) {
+        setIsNavVisible(true);
+        navContainerRef.current.classList.add("floating-nav");
+      }
+
+      lastScrollYRef.current = currentY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  // GSAP NAVBAR ANIMATION
   useEffect(() => {
     gsap.to(navContainerRef.current, {
       y: isNavVisible ? 0 : -100,
@@ -39,35 +49,35 @@ const NavBar = () => {
     });
   }, [isNavVisible]);
 
+  // TOGGLE AUDIO MANUALLY
   const toggleAudioIndicator = () => {
-    setAudioPlaying((prev) => !prev);
-    setIsIndicatorActive((prev) => !prev);
+    if (!audioElementRef.current) return;
+    if (isAudioPlaying) {
+      audioElementRef.current.pause();
+    } else {
+      audioElementRef.current.play();
+    }
+    setIsAudioPlaying(!isAudioPlaying);
+    setIsIndicatorActive(!isIndicatorActive);
   };
 
-  useEffect(() => {
-    if (isAudioPlaying) {
-      audioElementRef.current.play();
-    } else {
-      audioElementRef.current.pause();
-    }
-  }, [isAudioPlaying]);
-
-  // Auto-play audio on first interaction
+  // AUTO-PLAY AUDIO ON FIRST USER INTERACTION
   useEffect(() => {
     const audio = audioElementRef.current;
+    if (!audio) return;
+
     let hasPlayed = false;
 
     const playAudioWithFade = async () => {
-      if (hasPlayed || !audio) return;
+      if (hasPlayed) return;
       hasPlayed = true;
 
       try {
         audio.volume = 0.01;
+        await audio.play();
+        audio.muted = false;
 
-        await audio.play(); // <-- gesture-allowed
-        audio.muted = false; // <-- MUST unmute after play()
-
-        setAudioPlaying(true);
+        setIsAudioPlaying(true);
         setIsIndicatorActive(true);
 
         let volume = 0.01;
@@ -86,8 +96,7 @@ const NavBar = () => {
 
     const handleInteraction = () => {
       playAudioWithFade();
-
-      // Remove listeners after first successful start
+      // Remove listeners after first interaction
       document.removeEventListener("click", handleInteraction);
       window.removeEventListener("wheel", handleInteraction);
       window.removeEventListener("pointerdown", handleInteraction);
@@ -110,26 +119,17 @@ const NavBar = () => {
   return (
     <div
       ref={navContainerRef}
-      className="fixed
-    inset-x-0 top-4 z-50 h-16 border-none transition-all
-    duration-700 sm:inset-x-6"
+      className="fixed inset-x-0 top-4 z-50 h-16 border-none transition-all duration-700 sm:inset-x-6"
     >
-      <header
-        className="absolute top-1/2 w-full
-        -translate-y-1/2"
-      >
-        <nav
-          className="flex size-full items-center
-            justify-between p-4"
-        >
+      <header className="absolute top-1/2 w-full -translate-y-1/2">
+        <nav className="flex size-full items-center justify-between p-4">
           <div className="flex items-center gap-7">
             <img src="/img/logo.png" alt="logo" className="w-18" />
             <Button
               id="product-button"
               title="Products"
               rightIcon={<TiLocationArrow />}
-              containerClass="bg-blue-50 md:flex hidden
-                    items-center justify-center gap-1"
+              containerClass="bg-blue-50 md:flex hidden items-center justify-center gap-1"
             />
           </div>
 
@@ -146,11 +146,7 @@ const NavBar = () => {
               ))}
             </div>
 
-            <button
-              className="ml-10 flex items-center
-            space-x-0.5"
-              onClick={toggleAudioIndicator}
-            >
+            <button className="ml-10 flex items-center space-x-0.5" onClick={toggleAudioIndicator}>
               <audio
                 ref={audioElementRef}
                 className="hidden"
@@ -159,13 +155,10 @@ const NavBar = () => {
                 playsInline
                 loop
               />
-
               {[1, 2, 3, 4].map((bar) => (
                 <div
                   key={bar}
-                  className={`indicator-line ${
-                    isIndicatorActive ? "active" : ""
-                  }`}
+                  className={`indicator-line ${isIndicatorActive ? "active" : ""}`}
                   style={{ animationDelay: `${bar * 0.1}s` }}
                 />
               ))}
