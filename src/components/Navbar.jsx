@@ -52,6 +52,61 @@ const NavBar = () => {
     }
   }, [isAudioPlaying]);
 
+  // Auto-play audio on first interaction
+  useEffect(() => {
+    const audio = audioElementRef.current;
+    let hasPlayed = false;
+
+    const playAudioWithFade = async () => {
+      if (hasPlayed || !audio) return;
+      hasPlayed = true;
+
+      try {
+        audio.volume = 0.01;
+
+        await audio.play(); // <-- gesture-allowed
+        audio.muted = false; // <-- MUST unmute after play()
+
+        setAudioPlaying(true);
+        setIsIndicatorActive(true);
+
+        let volume = 0.01;
+        const fadeInterval = setInterval(() => {
+          if (volume < 1) {
+            volume += 0.02;
+            audio.volume = Math.min(volume, 1);
+          } else {
+            clearInterval(fadeInterval);
+          }
+        }, 100);
+      } catch (error) {
+        console.log("Audio play failed:", error);
+      }
+    };
+
+    const handleInteraction = () => {
+      playAudioWithFade();
+
+      // Remove listeners after first successful start
+      document.removeEventListener("click", handleInteraction);
+      window.removeEventListener("wheel", handleInteraction);
+      window.removeEventListener("pointerdown", handleInteraction);
+      window.removeEventListener("keydown", handleInteraction);
+    };
+
+    document.addEventListener("click", handleInteraction);
+    window.addEventListener("wheel", handleInteraction);
+    window.addEventListener("pointerdown", handleInteraction);
+    window.addEventListener("keydown", handleInteraction);
+
+    return () => {
+      document.removeEventListener("click", handleInteraction);
+      window.removeEventListener("wheel", handleInteraction);
+      window.removeEventListener("pointerdown", handleInteraction);
+      window.removeEventListener("keydown", handleInteraction);
+    };
+  }, []);
+
   return (
     <div
       ref={navContainerRef}
@@ -100,8 +155,11 @@ const NavBar = () => {
                 ref={audioElementRef}
                 className="hidden"
                 src="/audio/loop2.MP3"
+                muted
+                playsInline
                 loop
               />
+
               {[1, 2, 3, 4].map((bar) => (
                 <div
                   key={bar}
